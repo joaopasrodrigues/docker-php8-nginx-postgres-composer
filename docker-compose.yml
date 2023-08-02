@@ -3,10 +3,12 @@ services:
     web:
         image: nginx
         volumes:
-            - ./.docker/conf/nginx/default.conf:/etc/nginx/conf.d/default.conf
-            - .:/var/www/html
+            - ./conf/nginx/default.conf:/etc/nginx/conf.d/default.conf
+            - ./app:/app
         ports:
-            - 80:80
+#            - 80:80
+#           Use a diferent port - set in .env
+            - ${WEB_PORT}:80
         restart: always
         depends_on:
             - php
@@ -14,22 +16,27 @@ services:
         build: .docker
         restart: always
         volumes:
-            - ./.docker/conf/php/php.ini:/usr/local/etc/php/conf.d/php.ini
-            - ./.docker/conf/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
-            - .:/var/www/html
+            - ./conf/php/php.ini:/usr/local/etc/php/conf.d/php.ini
+            - ./conf/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+            - ./app/:/app
+        environment:
+            - POSTGRES_DB=${DB_NAME}
+            - POSTGRES_USER=${DB_USER}
+            - POSTGRES_PASSWORD=${DB_PASSWORD}
     composer:
         image: composer
         volumes:
-            - .:/app
-        command: install
+            - ./conf/composer:/app
+        command: install --ignore-platform-reqs
     db:
-        image: postgres:10.1
+        image: postgres
         restart: always
         environment:
             - POSTGRES_DB=${DB_NAME}
             - POSTGRES_USER=${DB_USER}
             - POSTGRES_PASSWORD=${DB_PASSWORD}
         ports:
-            - 5432:5432
+#            - 5432:5432
+             - :5432
         volumes:
-            - ./.docker/conf/postgres/:/docker-entrypoint-initdb.d/
+            - ./conf/postgres/:/docker-entrypoint-initdb.d/
